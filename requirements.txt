@@ -1,0 +1,4 @@
+customtkinter>=5.0.2
+tkinterdnd2==0.4.3
+requests>=2.31
+

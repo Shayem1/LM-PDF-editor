@@ -5,6 +5,7 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from tkinter import *
 import threading
+import subprocess
 import tkinterdnd2
 try:
     from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -123,52 +124,61 @@ class PDFEditorApp(ctk.CTk):
 
     # ------------------------------------------------------------------
     def start_process(self) -> None:
-        pdf = self.pdf_path.get()
+        """Start the processing thread, using a selected PDF or creating a new one."""
+        pdf = self.pdf_path.get().strip() or None  # Use selected file or None
         out_name = self.output_name.get().strip()
-
-        if not os.path.isfile(pdf):
-            messagebox.showerror("Error", "Please choose a valid PDF file.")
-            return
-
         if not out_name.lower().endswith(".pdf"):
             out_name += ".pdf"
 
+        # Update user_context from the text box
         self.user_context = self.context_box.get("1.0", "end-1c")
 
-        # Disable the Start button while running
+        # Disable progress/status widgets
         for w in (self.progress_bar, self.status_label):
             try:
-                # Only apply state to widgets that accept it
                 w.configure(state="disabled")
             except ValueError as exc:
-                # Not all widgets support `state`; ignore the error
                 if "state" not in str(exc):
-                    raise     # re‑raise unexpected errors
+                    raise
 
+        # Start pipeline thread
         threading.Thread(
             target=self._run_pipeline_thread,
             args=(pdf, out_name),
-            daemon=True   # so it exits if you close the window
+            daemon=True
         ).start()
 
     # ------------------------------------------------------------------
-    def run_pipeline(self, pdf_path: str, output_pdf: str) -> None:
-        """All the heavy lifting – orchestrates the four steps."""
-        # 1️⃣ PDF → temporary HTML
-        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as tmp_in:
-            temp_html = tmp_in.name
-        self.set_progress(0.15)
-        pdf_to_html(pdf_path, temp_html)
+    def run_pipeline(self, pdf_path: str | None, output_pdf: str) -> None:
+        """All the heavy lifting – orchestrates the steps."""
+        # 1️⃣ PDF → temporary HTML (or create blank HTML if no input PDF)
+        with tempfile.NamedTemporaryFile(suffix=".html", delete=False, mode="w", encoding="utf-8") as tmp_in:
+            temp_html_path = tmp_in.name
+            if pdf_path:
+                self.set_progress(0.15)
+                pdf_to_html(pdf_path, temp_html_path)
+            else:
+                # Create a basic blank HTML template
+                tmp_in.write("<html><body></body></html>")
+                self.set_progress(0.10)
 
         # 2️⃣ Read original HTML
-        with open(temp_html, encoding="utf-8") as f:
+        with open(temp_html_path, encoding="utf-8") as f:
             original_html = f.read()
         self.set_progress(0.30)
 
         # 3️⃣ Build prompt (fixed + user supplied)
         fixed_context = (
             "Below is an instruction that describes a task. "
-            "Write a response that appropriately completes the request and only output the answer and nothing extra."
+            "Append your response so that it appropriately completes the request. "
+            "If the question originates from a table, append your answer in the cell below or next to it (whichever makes more sense). "
+            "Do not answer rhetorical questions or instructions or sample questions. "
+            "You may remove 'type here' statements or placeholder text. "
+            "Include the original document's formatting/text, headers, footers, and information in your response. "
+            "Append your contributions under the questions. "
+            "Keep paragraph structure, bold/italic text, headings, lists, and line spacing. "
+            "Remove any extra '```html```'. "
+            "do not add ...(rest of the document unchanged) or anything simmilar, include the rest of the document"
         )
         full_prompt = (
             f"{fixed_context}\n\n"
@@ -180,28 +190,48 @@ class PDFEditorApp(ctk.CTk):
         self.set_progress(0.45)
         edited_html = self.lm.ask(full_prompt)
 
-        # 5️⃣ Write the edited HTML temporarily
-        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as tmp_out:
-            temp_edited = tmp_out.name
-            tmp_out.write(edited_html.encode("utf-8"))
+        # 5️⃣ Write the edited HTML temporarily (close immediately so wkhtmltopdf can access it)
+        with tempfile.NamedTemporaryFile(suffix=".html", delete=False, mode="w", encoding="utf-8") as tmp_out:
+            tmp_out.write(edited_html)
+            temp_edited_path = tmp_out.name
 
-        # 6️⃣ Convert edited HTML → final PDF
+        # 6️⃣ Convert HTML → PDF using wkhtmltopdf
         self.set_progress(0.75)
-        html_to_pdf(temp_edited, output_pdf)
-
-        # Clean up temporaries
-        os.remove(temp_html)
-        os.remove(temp_edited)
+        try:
+            import subprocess  # ensure subprocess is defined
+            cmd = [
+                "wkhtmltopdf",
+                "--enable-local-file-access",
+                "--disable-smart-shrinking",
+                "--encoding", "UTF-8",
+                temp_edited_path,
+                output_pdf
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise RuntimeError(f"wkhtmltopdf failed:\n{result.stderr}")
+        finally:
+            # Clean up temp files
+            for path in (temp_html_path, temp_edited_path):
+                if os.path.exists(path):
+                    os.remove(path)
 
         # Final progress tick
         self.set_progress(1.0)
 
 
-    def _run_pipeline_thread(self, pdf_path: str, output_pdf: str) -> None:
+    def _run_pipeline_thread(self, pdf_path: str | None, output_pdf: str) -> None:
+        """Threaded pipeline runner."""
         try:
-            self.set_status("Converting PDF → HTML…")
-            self.set_progress(0.1)
+            if pdf_path:
+                self.set_status("Converting PDF → HTML…")
+                self.set_progress(0)
+            else:
+                self.set_status("Creating new PDF…")
+                self.set_progress(0.05)
+
             self.run_pipeline(pdf_path, output_pdf)
+
             self.set_status("Done!")
             self.set_progress(1.0)
             messagebox.showinfo(
@@ -209,21 +239,16 @@ class PDFEditorApp(ctk.CTk):
                 f"Modified PDF written to:\n{os.path.abspath(output_pdf)}"
             )
         except Exception as exc:
-            # Show error – this is run in the main thread via after
-            def _show_error():
+            def _show_error(exc):
                 messagebox.showerror("Processing error", str(exc))
-            self.after(0, _show_error)
+            self.after(0, _show_error, exc)
         finally:
-            # Re‑enable widgets no matter what
             for w in (self.progress_bar, self.status_label):
                 try:
-                    # Only apply state to widgets that accept it
-                    w.configure(state="disabled")
+                    w.configure(state="normal")
                 except ValueError as exc:
-                    # Not all widgets support `state`; ignore the error
                     if "state" not in str(exc):
-                        raise     # re‑raise unexpected errors
-
+                        raise
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
     app = PDFEditorApp()

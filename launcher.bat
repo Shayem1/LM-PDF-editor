@@ -9,12 +9,12 @@ pushd "%~dp0"
 REM ------------------------------------------------------------------
 REM 2️⃣  Activate the venv (change "venv" to whatever your folder is called)
 if exist "venv\Scripts\activate.bat" (
-    echo Activating virtual‑environment...
+    echo "Activating virtual‑environment..."
     call venv\Scripts\activate.bat
 ) else (
     echo.
-    echo   ERROR:  Virtual environment not found!
-    echo   Run 'redlist.bat' first (it will create the venv and install deps).
+    echo   "ERROR:  Virtual environment not found!"
+    echo   "Run 'redlist.bat' first (it will create the venv and install deps)."
     pause
     popd
     exit /b 1
@@ -25,7 +25,7 @@ rem 3️⃣  Verify that Python is now reachable (it should be via the env)
 where python >nul 2>&1
 if errorlevel 1 (
     echo.
-    echo   ERROR:  Python not found after activating venv.
+    echo   "ERROR:  Python not found after activating venv."
     pause
     popd
     exit /b 1
@@ -34,7 +34,7 @@ if errorlevel 1 (
 REM ------------------------------------------------------------------
 rem 4️⃣  Run your main script.  %* forwards any arguments you typed after the batch file name.
 echo.
-echo Running: python main.py %*
+echo "Running: python main.py %*"
 python main.py %*
 
 REM ------------------------------------------------------------------

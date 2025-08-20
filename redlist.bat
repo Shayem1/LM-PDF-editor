@@ -54,7 +54,7 @@ python -m pip install --upgrade pip setuptools wheel >nul 2>&1
 
 echo "Installing required Python packages..."
 pip install -r requirements.txt
-pip install customtkinter tkinterdnd2 requests
+pip install customtkinter tkinterdnd2 requests pdfminer.six fitz
 
 :: --------------------------------------------------------------
 :: 4️⃣ Verify external binaries are on PATH

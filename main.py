@@ -169,17 +169,30 @@ class PDFEditorApp(ctk.CTk):
 
         # 3️⃣ Build prompt (fixed + user supplied)
         fixed_context = (
-            "Below is an instruction that describes a task. "
-            "Append your response so that it appropriately completes the request. "
-            "If the question originates from a table, append your answer in the cell below or next to it (whichever makes more sense). "
-            "Do not answer rhetorical questions or instructions or sample questions. "
-            "You may remove 'type here' statements or placeholder text. "
-            "Include the original document's formatting/text, headers, footers, and information in your response. "
-            "Append your contributions under the questions. "
-            "Keep paragraph structure, bold/italic text, headings, lists, and line spacing. "
-            "Remove any extra '```html```'. "
-            "do not add ...(rest of the document unchanged) or anything simmilar, include the rest of the document"
+            "You are a document generator that produces clean, valid HTML for educational and printable PDF documents. "
+            "Rules: "
+            "1. Always return complete HTML wrapped in <html><body> … </body></html>. "
+            "2. Use inline CSS styles only (no external CSS, no JavaScript). "
+            "3. Ensure the HTML converts cleanly into a PDF with wkhtmltopdf or similar tools. "
+            "4. Use safe fonts (Arial, Times New Roman, Verdana, Courier New) and specify font sizes. "
+            "5. Keep formatting simple but polished: headings, paragraphs, tables, borders, spacing, and alignment. "
+            "6. Do not include explanations, comments, or extra text outside the HTML. "
+            "Always output **only the HTML document** and nothing else."
         )
+
+        # Previous prompt
+        """Below is an instruction that describes a task. "
+        Append your response to the given atachment (if any) so that it appropriately completes the request. 
+        If the question originates from a table, append your answer in the cell below or next to it (whichever makes more sense). 
+        Do not answer rhetorical questions or instructions or sample questions. "
+        You may remove 'type here' statements or placeholder text. "
+        Always include the original document's formatting/text, headers, footers, and information in your response. 
+        Append your answers under the questions (if any). "
+        Keep paragraph structure, bold/italic text, headings, lists, and line spacing. 
+        Remove any extra '```html```'. "
+        do not add ...(rest of the document unchanged) or anything simmilar, include the rest of the document"""
+
+
         full_prompt = (
             f"{fixed_context}\n\n"
             f"User context:\n{self.user_context}\n\n"

@@ -16,7 +16,7 @@ class LMClient:
         payload = {
             "model": "openai/gpt-oss-20b",
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.9,
+            "temperature": 0.3,
             "max_tokens": 12000,           # plenty for large HTML snippets
         }
         resp = requests.post(self.url, json=payload, timeout=300)

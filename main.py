@@ -169,30 +169,26 @@ class PDFEditorApp(ctk.CTk):
 
         # 3️⃣ Build prompt (fixed + user supplied)
         fixed_context = (
-            "You are a document generator that produces clean, valid HTML for educational and printable PDF documents. "
-            "Rules: "
-            "1. Always return complete HTML wrapped in <html><body> … </body></html>. "
-            "2. Use inline CSS styles only (no external CSS, no JavaScript). "
-            "3. Ensure the HTML converts cleanly into a PDF with wkhtmltopdf or similar tools. "
-            "4. Use safe fonts (Arial, Times New Roman, Verdana, Courier New) and specify font sizes. "
-            "5. Keep formatting simple but polished: headings, paragraphs, tables, borders, spacing, and alignment. "
-            "6. Do not include explanations, comments, or extra text outside the HTML. "
-            "Always output **only the HTML document** and nothing else."
+            """You are an assistant that edits and extends an existing HTML document.  
+            Rules:  
+            1. Always return the **entire HTML document** with all original formatting, text, colors, fonts, font size, and layout fully preserved.  
+            2. Never change, remove, or restyle existing content unless explicitly instructed.  
+            3. If questions are present in the document, do not alter their formatting or styles.  
+            4. When adding answers beneath questions, use the following format only:  
+            <div style="margin-top:5px; font-family:Arial; font-size:12pt; color:#000000;">Answer: ...</div>  
+            (Use this exact style for all answers, unless the user requests a different style.)  
+            5. Always keep font size, colors, and styles consistent for answers — do not copy styles from the question.  
+            6. If the user asks for a specific formatting style (different font, size, or color), apply that style **only to the new answer text**.  
+            7. If only a portion of the document is affected, still include the **unchanged rest of the document** exactly as given.  
+            8. Do not output anything other than the modified full HTML document.
+            9. Always return complete HTML wrapped in <html><body> … </body></html>.
+            10. Use inline CSS styles only (no external CSS, no JavaScript).
+            11. Ensure the HTML converts cleanly into a PDF with wkhtmltopdf or similar tools.
+            12. Use safe fonts (Arial, Times New Roman, Verdana, Courier New) and specify font sizes.
+            13. Keep formatting simple but polished: headings, paragraphs, tables, borders, spacing, and alignment.
+            14. Do not include explanations, comments, or extra text outside the HTML."""  
+
         )
-
-        # Previous prompt
-        """Below is an instruction that describes a task. "
-        Append your response to the given atachment (if any) so that it appropriately completes the request. 
-        If the question originates from a table, append your answer in the cell below or next to it (whichever makes more sense). 
-        Do not answer rhetorical questions or instructions or sample questions. "
-        You may remove 'type here' statements or placeholder text. "
-        Always include the original document's formatting/text, headers, footers, and information in your response. 
-        Append your answers under the questions (if any). "
-        Keep paragraph structure, bold/italic text, headings, lists, and line spacing. 
-        Remove any extra '```html```'. "
-        do not add ...(rest of the document unchanged) or anything simmilar, include the rest of the document"""
-
-
         full_prompt = (
             f"{fixed_context}\n\n"
             f"User context:\n{self.user_context}\n\n"

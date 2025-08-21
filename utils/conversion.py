@@ -1,6 +1,7 @@
 # utils/conversion.py
 import fitz  # PyMuPDF
 import subprocess
+import shutil
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTTextContainer, LTChar, LTTextLine
 
@@ -66,14 +67,27 @@ def pdf_to_html(pdf_path: str, out_html: str) -> None:
 
 def html_to_pdf(html_file: str, out_pdf: str) -> None:
     """Convert HTML back to PDF using wkhtmltopdf while preserving formatting and UTF-8."""
+
+    # Find wkhtmltopdf in PATH (works on Linux + Windows if installed properly)
+    wkhtmltopdf_path = shutil.which("wkhtmltopdf")
+    if wkhtmltopdf_path is None:
+        raise FileNotFoundError(
+            "wkhtmltopdf not found. Please install it:\n"
+            "  - Debian/Ubuntu: sudo apt install wkhtmltopdf\n"
+            "  - Fedora: sudo dnf install wkhtmltopdf\n"
+            "  - Arch: sudo pacman -S wkhtmltopdf\n"
+            "  - Windows: download from https://wkhtmltopdf.org/downloads.html"
+        )
+
     cmd = [
-        "wkhtmltopdf",
+        wkhtmltopdf_path,
         "--enable-local-file-access",  # allow access to local files (CSS/fonts)
         "--disable-smart-shrinking",   # preserve original layout
         "--encoding", "UTF-8",         # ensure UTF-8 characters render correctly
         html_file,
         out_pdf
     ]
+
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"wkhtmltopdf failed:\n{result.stderr}")

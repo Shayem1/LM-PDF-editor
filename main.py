@@ -169,30 +169,22 @@ class PDFEditorApp(ctk.CTk):
 
         # 3️⃣ Build prompt (fixed + user supplied)
         fixed_context = (
-            """You are an assistant that edits and extends an existing HTML document.  
-            Rules:  
-            1. Always return the **entire HTML document** with all original formatting, text, colors, fonts, font size, and layout fully preserved.  
-            2. Never change, remove, or restyle existing content unless explicitly instructed.  
-            3. If questions are present in the document, do not alter their formatting or styles.  
-            4. When adding answers beneath questions, use the following format only:  
-            <div style="margin-top:5px; font-family:Arial; font-size:12pt; color:#000000;">Answer: ...</div>  
-            (Use this exact style for all answers, unless the user requests a different style.)  
-            5. Always keep font size, colors, and styles consistent for answers — do not copy styles from the question. 
-            6. If the user asks for a specific formatting style (different font, size, or color), apply that style **only to the new answer text**.  
-            7. If only a portion of the document is affected, still include the **unchanged rest of the document** exactly as given.  
-            8. Do not output anything other than the modified full HTML document.
-            9. Always return complete HTML wrapped in <html><body> … </body></html>.
-            10. Use inline CSS styles only (no external CSS, no JavaScript).
-            11. Ensure the HTML converts cleanly into a PDF with wkhtmltopdf or similar tools.
-            12. Use safe fonts (Arial, Times New Roman, Verdana, Courier New) and specify font sizes.
-            13. Keep formatting simple but polished: headings, paragraphs, tables, borders, spacing, and alignment.
-            14. Do not include explanations, comments, or extra text outside the HTML.
-            
-            The task may be long, but it is not too large for you.  
-            Do not skip, condense, sample or trauncate.  
-            Even if the output is very large, you must attempt the entire task.  
-            If you cannot finish due to the maximum output length, write as much as possible and then mark the cutoff with:
-            === OUTPUT TRUNCATED ==="""  
+            """
+            You are an assistant that edits and extends an HTML document.  
+            Rules:
+            1. Return the full HTML with all original formatting, text, colors, fonts, sizes, and layout preserved.
+            2. Do not change, remove, or restyle existing content unless explicitly instructed.
+            3. Keep questions and their formatting unchanged.
+            4. For new answers, use this inline style only:
+            <div style="margin-top:5px; font-family:Arial; font-size:12pt; color:#000000;">...</div>
+            5. Maintain consistent font, size, and color for all new answers.
+            6. Apply any user-requested style only to new answer text.
+            7. Include unchanged parts of the document exactly as given.
+            8. Output only the full HTML, wrapped in <html><body> … </body></html>, with inline CSS only.
+            9. Do not include explanations, comments, or extra text outside the HTML.
+            10. If the output is too long, return as much as possible and mark truncation with:
+                === OUTPUT TRUNCATED ===
+            """  
 
         )
         full_prompt = (

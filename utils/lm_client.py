@@ -14,12 +14,12 @@ class LMClient:
     def ask(self, prompt: str) -> str:
         """Send a prompt and return the model’s raw text answer."""
         payload = {
-            "model": "openai/gpt-oss-20b",
+            "model": "qwen/qwen3-4b-2507",
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0,
-            "max_tokens": 48000,           # plenty for large HTML snippets
+            "max_tokens": 64000,           # plenty for large HTML snippets
         }
-        resp = requests.post(self.url, json=payload, timeout=900)
+        resp = requests.post(self.url, json=payload, timeout=1200)
         resp.raise_for_status()
         data: Any = resp.json()
         return data["choices"][0]["message"]["content"]

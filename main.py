@@ -177,7 +177,7 @@ class PDFEditorApp(ctk.CTk):
             4. When adding answers beneath questions, use the following format only:  
             <div style="margin-top:5px; font-family:Arial; font-size:12pt; color:#000000;">Answer: ...</div>  
             (Use this exact style for all answers, unless the user requests a different style.)  
-            5. Always keep font size, colors, and styles consistent for answers — do not copy styles from the question.  
+            5. Always keep font size, colors, and styles consistent for answers — do not copy styles from the question. 
             6. If the user asks for a specific formatting style (different font, size, or color), apply that style **only to the new answer text**.  
             7. If only a portion of the document is affected, still include the **unchanged rest of the document** exactly as given.  
             8. Do not output anything other than the modified full HTML document.
@@ -186,7 +186,13 @@ class PDFEditorApp(ctk.CTk):
             11. Ensure the HTML converts cleanly into a PDF with wkhtmltopdf or similar tools.
             12. Use safe fonts (Arial, Times New Roman, Verdana, Courier New) and specify font sizes.
             13. Keep formatting simple but polished: headings, paragraphs, tables, borders, spacing, and alignment.
-            14. Do not include explanations, comments, or extra text outside the HTML."""  
+            14. Do not include explanations, comments, or extra text outside the HTML.
+            
+            The task may be long, but it is not too large for you.  
+            Do not skip, condense, sample or trauncate.  
+            Even if the output is very large, you must attempt the entire task.  
+            If you cannot finish due to the maximum output length, write as much as possible and then mark the cutoff with:
+            === OUTPUT TRUNCATED ==="""  
 
         )
         full_prompt = (

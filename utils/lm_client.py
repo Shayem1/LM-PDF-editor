@@ -16,10 +16,10 @@ class LMClient:
         payload = {
             "model": "openai/gpt-oss-20b",
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.3,
-            "max_tokens": 12000,           # plenty for large HTML snippets
+            "temperature": 0,
+            "max_tokens": 48000,           # plenty for large HTML snippets
         }
-        resp = requests.post(self.url, json=payload, timeout=300)
+        resp = requests.post(self.url, json=payload, timeout=900)
         resp.raise_for_status()
         data: Any = resp.json()
         return data["choices"][0]["message"]["content"]

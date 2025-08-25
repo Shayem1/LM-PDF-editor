@@ -16,8 +16,8 @@ class LMClient:
         payload = {
             "model": "qwen/qwen3-4b-2507",
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0,
-            "max_tokens": 64000,           # plenty for large HTML snippets
+            "temperature": 0.8,
+            "max_tokens": 32000,           # plenty for large HTML snippets
         }
         resp = requests.post(self.url, json=payload, timeout=1200)
         resp.raise_for_status()
